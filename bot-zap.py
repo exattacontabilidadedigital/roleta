@@ -258,6 +258,7 @@ if st.session_state.enviando and not st.session_state.envio_concluido:
             numero = str(row['contato']).strip()
             nome = row['nome'] if 'nome' in df.columns and pd.notna(row['nome']) else numero
             
+            
             # Verifica se já foi processado
             if numero in st.session_state.contatos_processados:
                 continue
