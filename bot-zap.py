@@ -2,8 +2,20 @@ import streamlit as st
 import pandas as pd
 import os
 import io
-import pywhatkit
 import time
+
+# Verifica se está rodando localmente ou no Streamlit Cloud
+IS_LOCAL = os.getenv('STREAMLIT_SERVER_PORT') is None
+
+# Importa pywhatkit apenas localmente
+if IS_LOCAL:
+    try:
+        import pywhatkit
+        WHATSAPP_AVAILABLE = True
+    except ImportError:
+        WHATSAPP_AVAILABLE = False
+else:
+    WHATSAPP_AVAILABLE = False
 
 st.title("Cadastro de Contatos - Semana Empresarial")
 
@@ -193,6 +205,10 @@ mensagem = st.text_area("Mensagem a ser enviada", value=mensagem_padrao, height=
 # Botão para executar o envio
 st.subheader("Enviar mensagens")
 
+# Aviso sobre ambiente
+if not WHATSAPP_AVAILABLE:
+    st.warning("⚠️ **Envio de WhatsApp disponível apenas localmente.** No Streamlit Cloud, você pode gerenciar contatos e preparar mensagens.")
+
 # Controle de estado para parar o envio
 if 'enviando' not in st.session_state:
     st.session_state.enviando = False
@@ -204,7 +220,7 @@ if 'contatos_processados' not in st.session_state:
 col_envio1, col_envio2 = st.columns(2)
 
 with col_envio1:
-    if st.button("🚀 Executar envio das mensagens", type="primary", disabled=st.session_state.enviando):
+    if st.button("🚀 Executar envio das mensagens", type="primary", disabled=st.session_state.enviando or not WHATSAPP_AVAILABLE):
         st.session_state.enviando = True
         st.session_state.envio_concluido = False
         st.session_state.contatos_processados = []
@@ -255,18 +271,26 @@ if st.session_state.enviando and not st.session_state.envio_concluido:
             msg = mensagem.format(contato=nome)
             status_text.text(f"📤 Enviando para {nome} ({numero})... ({contatos_enviados + 1}/{len(df_selecionados)})")
             
-            try:
-                pywhatkit.sendwhatmsg_instantly(numero, msg, wait_time=15, tab_close=True)
+            if WHATSAPP_AVAILABLE:
+                try:
+                    pywhatkit.sendwhatmsg_instantly(numero, msg, wait_time=15, tab_close=True)
+                    contatos_enviados += 1
+                    df.at[index, 'status'] = 'Enviado'
+                    st.success(f"✅ Enviado para {nome} ({numero})")
+                    st.session_state.contatos_processados.append(numero)
+                    time.sleep(15)  # Aguarda mais tempo entre mensagens
+                except Exception as e:
+                    contatos_erro += 1
+                    df.at[index, 'status'] = 'Erro'
+                    st.error(f"❌ Erro ao enviar para {numero}: {e}")
+                    st.session_state.contatos_processados.append(numero)
+            else:
+                # Simula envio no Streamlit Cloud
                 contatos_enviados += 1
-                df.at[index, 'status'] = 'Enviado'
-                st.success(f"✅ Enviado para {nome} ({numero})")
+                df.at[index, 'status'] = 'Simulado'
+                st.success(f"✅ Simulado envio para {nome} ({numero})")
                 st.session_state.contatos_processados.append(numero)
-                time.sleep(15)  # Aguarda mais tempo entre mensagens
-            except Exception as e:
-                contatos_erro += 1
-                df.at[index, 'status'] = 'Erro'
-                st.error(f"❌ Erro ao enviar para {numero}: {e}")
-                st.session_state.contatos_processados.append(numero)
+                time.sleep(1)  # Pequena pausa para simulação
             
             progress_bar.progress((contatos_enviados + contatos_erro) / len(df_selecionados))
         
