@@ -190,6 +190,6 @@ if __name__ == '__main__':
     print("   POST /api/atualizar-resultado")
     print("   GET  /api/participantes")
     
-    # Para produção, não usar app.run()
+    # Para produção, usar gunicorn
     if __name__ == '__main__':
         app.run(debug=debug, host='0.0.0.0', port=port) 
