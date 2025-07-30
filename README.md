@@ -34,7 +34,25 @@ Acesse: http://localhost:5000
 
 ## 🌐 Hospedagem
 
-### 1. Render (Recomendado - Gratuito)
+### 1. Coolify (Recomendado - Self-hosted)
+
+1. **Instalar Coolify** em seu servidor
+2. **Criar novo projeto** no painel do Coolify
+3. **Conectar repositório:** `https://github.com/exattacontabilidadedigital/roleta.git`
+4. **Configurar:**
+   - **Build Pack:** Dockerfile
+   - **Port:** 8000
+   - **Health Check Path:** /
+5. **Deploy automático**
+
+**Vantagens:**
+- ✅ **Controle total** do servidor
+- ✅ **Deploy automático** do GitHub
+- ✅ **SSL automático**
+- ✅ **Logs em tempo real**
+- ✅ **Backup automático**
+
+### 2. Render (Gratuito)
 
 1. **Criar conta** em [render.com](https://render.com)
 2. **Conectar repositório** GitHub/GitLab

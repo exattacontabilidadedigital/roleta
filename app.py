@@ -179,7 +179,7 @@ if __name__ == '__main__':
     init_db()
     
     # Configuração para produção
-    port = int(os.environ.get('PORT', 5000))
+    port = int(os.environ.get('PORT', 8000))
     debug = os.environ.get('FLASK_ENV') == 'development'
     
     print("🚀 Servidor iniciado!")
@@ -190,4 +190,6 @@ if __name__ == '__main__':
     print("   POST /api/atualizar-resultado")
     print("   GET  /api/participantes")
     
-    app.run(debug=debug, host='0.0.0.0', port=port) 
+    # Para produção, não usar app.run()
+    if __name__ == '__main__':
+        app.run(debug=debug, host='0.0.0.0', port=port) 
