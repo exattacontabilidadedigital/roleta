@@ -1,0 +1,807 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Roleta da Sorte</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Nunito', sans-serif;
+            background: linear-gradient(135deg, #8BC6EC 0%, #9599E2 100%);
+            min-height: 100vh;
+            overflow-x: hidden;
+            margin: 0;
+            padding: 0;
+        }
+
+        .wheel-container {
+            position: relative;
+            width: min(350px, 90vw);
+            height: min(350px, 90vw);
+            margin: 0 auto;
+        }
+
+        .wheel {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            border-radius: 50%;
+            overflow: hidden;
+            transition: transform 4s cubic-bezier(0.17, 0.67, 0.12, 0.99);
+            transform: rotate(0deg);
+            box-shadow: 0 0 20px rgba(0,0,0,0.2), 0 0 30px rgba(0,0,0,0.1);
+        }
+
+        .wheel-section {
+            position: absolute;
+            width: 50%;
+            height: 50%;
+            transform-origin: bottom right;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            cursor: default;
+        }
+
+        .section-content {
+            position: absolute;
+            width: 80px;
+            text-align: center;
+            transform: rotate(60deg);
+            transform-origin: center;
+            color: white;
+            font-weight: bold;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-size: clamp(12px, 3vw, 14px);
+            padding-bottom: 60px;
+        }
+
+        .section-icon {
+            font-size: clamp(20px, 5vw, 24px);
+            margin-bottom: 5px;
+        }
+
+        .pointer {
+            position: absolute;
+            top: -15px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 30px;
+            height: 40px;
+            z-index: 10;
+            filter: drop-shadow(0 0 5px rgba(0,0,0,0.3));
+        }
+
+        .spin-button {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: #333;
+            cursor: pointer;
+            z-index: 5;
+            box-shadow: 0 0 10px rgba(0,0,0,0.2), inset 0 0 10px rgba(0,0,0,0.1);
+            border: none;
+            transition: all 0.2s;
+            font-size: clamp(14px, 3vw, 16px);
+        }
+
+        .spin-button:hover:not(:disabled) {
+            transform: translate(-50%, -50%) scale(1.05);
+            box-shadow: 0 0 15px rgba(0,0,0,0.3), inset 0 0 10px rgba(0,0,0,0.1);
+        }
+
+        .spin-button:active:not(:disabled) {
+            transform: translate(-50%, -50%) scale(0.95);
+        }
+
+        .spin-button:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
+
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            max-width: 500px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+            font-size: 14px;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e1e5e9;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+            box-sizing: border-box;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #8BC6EC;
+            box-shadow: 0 0 0 3px rgba(139, 198, 236, 0.1);
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .checkbox-input {
+            width: 20px;
+            height: 20px;
+            margin-top: 2px;
+            accent-color: #8BC6EC;
+        }
+
+        .checkbox-label {
+            font-size: 14px;
+            line-height: 1.4;
+            color: #555;
+        }
+
+        .submit-button {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #8BC6EC 0%, #9599E2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .submit-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+        }
+
+        .submit-button:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .result-message {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            background: white;
+            padding: 20px 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            z-index: 100;
+            text-align: center;
+            transition: all 0.5s cubic-bezier(0.17, 0.67, 0.83, 0.67);
+            max-width: 90vw;
+            width: 400px;
+        }
+
+        .result-message.show {
+            transform: translate(-50%, -50%) scale(1);
+        }
+
+        .confetti {
+            position: fixed;
+            width: 10px;
+            height: 10px;
+            background-color: #f00;
+            opacity: 0;
+            top: -10px;
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        @keyframes fall {
+            0% {
+                opacity: 1;
+                top: -10px;
+                transform: translateX(0) rotate(0deg);
+            }
+            100% {
+                opacity: 0;
+                top: 100vh;
+                transform: translateX(100px) rotate(360deg);
+            }
+        }
+
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 99;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s;
+        }
+
+        .overlay.show {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .error-message {
+            color: #e74c3c;
+            font-size: 14px;
+            margin-top: 5px;
+            display: none;
+        }
+
+        .success-message {
+            color: #27ae60;
+            font-size: 14px;
+            margin-top: 5px;
+            display: none;
+        }
+
+        @media (max-width: 480px) {
+            .wheel-container {
+                width: 280px;
+                height: 280px;
+            }
+            
+            .section-content {
+                width: 60px;
+                font-size: 12px;
+                padding-bottom: 40px;
+            }
+            
+            .section-icon {
+                font-size: 18px;
+            }
+            
+            .spin-button {
+                width: 60px;
+                height: 60px;
+                font-size: 12px;
+            }
+
+            .modal-content {
+                padding: 20px;
+                margin: 10px;
+            }
+        }
+
+        .hidden {
+            display: none !important;
+        }
+    </style>
+</head>
+<body class="flex flex-col items-center justify-center p-4">
+    <!-- Modal de Cadastro -->
+    <div class="modal" id="cadastroModal">
+        <div class="modal-content">
+            <div class="text-center mb-6">
+                <h2 class="text-3xl font-bold text-gray-800 mb-2">🎉 Roleta da Sorte</h2>
+                <p class="text-gray-600">Complete seus dados para participar!</p>
+            </div>
+
+            <form id="cadastroForm">
+                <div class="form-group">
+                    <label for="nome" class="form-label">Nome Completo *</label>
+                    <input type="text" id="nome" name="nome" class="form-input" required>
+                    <div class="error-message" id="nomeError">Por favor, insira seu nome completo.</div>
+                </div>
+
+                <div class="form-group">
+                    <label for="telefone" class="form-label">Telefone *</label>
+                    <input type="tel" id="telefone" name="telefone" class="form-input" required placeholder="(11) 99999-9999">
+                    <div class="error-message" id="telefoneError">Por favor, insira um telefone válido.</div>
+                </div>
+
+                <div class="form-group">
+                    <label for="empresa" class="form-label">Empresa</label>
+                    <input type="text" id="empresa" name="empresa" class="form-input" placeholder="Nome da sua empresa">
+                </div>
+
+                <div class="form-group">
+                    <label for="cargo" class="form-label">Cargo</label>
+                    <input type="text" id="cargo" name="cargo" class="form-input" placeholder="Seu cargo atual">
+                </div>
+
+                <div class="checkbox-group">
+                    <input type="checkbox" id="aceite" name="aceite" class="checkbox-input" required>
+                    <label for="aceite" class="checkbox-label">
+                        Concordo em receber mensagens promocionais e novidades por WhatsApp, SMS ou e-mail. 
+                        <span class="text-red-500">*</span>
+                    </label>
+                </div>
+                <div class="error-message" id="aceiteError">Você precisa aceitar os termos para continuar.</div>
+
+                <button type="submit" class="submit-button" id="submitBtn">
+                    Participar da Roleta
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Conteúdo da Roleta (inicialmente oculto) -->
+    <div id="roletaContent" class="hidden">
+        <div class="text-center mb-8">
+            <h1 class="text-4xl font-bold text-white mb-2 drop-shadow-lg">Roleta da Sorte</h1>
+            <p class="text-white text-xl">Gire e ganhe um brinde!</p>
+            <div class="mt-4 text-white text-sm">
+                <p>Participante: <span id="participanteNome" class="font-bold"></span></p>
+            </div>
+            <div class="mt-4">
+                <button id="reiniciarBtn" class="bg-white bg-opacity-20 hover:bg-opacity-30 text-white font-bold py-2 px-6 rounded-full transition-all border-2 border-white">
+                    🆕 Limpar e Novo Participante
+                </button>
+            </div>
+        </div>
+
+        <div class="wheel-container">
+            <svg class="pointer" viewBox="0 0 30 40" aria-hidden="true">
+                <polygon points="15,0 30,20 15,15 0,20" fill="#FF5252" />
+            </svg>
+            
+            <div class="wheel" id="wheel" role="application" aria-label="Roleta da sorte">
+                <!-- Seção 1: Caneta -->
+                <div class="wheel-section" style="background: #FF5252; transform: rotate(0deg);" aria-label="Seção Caneta">
+                    <div class="section-content">
+                        <div class="section-icon" aria-hidden="true">✏️</div>
+                        <div>Caneta</div>
+                    </div>
+                </div>
+                
+                <!-- Seção 2: Copo -->
+                <div class="wheel-section" style="background: #FF9800; transform: rotate(60deg);" aria-label="Seção Copo">
+                    <div class="section-content">
+                        <div class="section-icon" aria-hidden="true">🥤</div>
+                        <div>Copo</div>
+                    </div>
+                </div>
+                
+                <!-- Seção 3: Chaveiro -->
+                <div class="wheel-section" style="background: #4CAF50; transform: rotate(120deg);" aria-label="Seção Chaveiro">
+                    <div class="section-content">
+                        <div class="section-icon" aria-hidden="true">🔑</div>
+                        <div>Chaveiro</div>
+                    </div>
+                </div>
+                
+                <!-- Seção 4: Porta-copos -->
+                <div class="wheel-section" style="background: #2196F3; transform: rotate(180deg);" aria-label="Seção Porta-copos">
+                    <div class="section-content">
+                        <div class="section-icon" aria-hidden="true">🍹</div>
+                        <div>Porta-copos</div>
+                    </div>
+                </div>
+                
+                <!-- Seção 5: Pulou a vez -->
+                <div class="wheel-section" style="background: #9C27B0; transform: rotate(240deg);" aria-label="Seção Pulou a vez">
+                    <div class="section-content">
+                        <div class="section-icon" aria-hidden="true">⏭️</div>
+                        <div>Pulou a vez</div>
+                    </div>
+                </div>
+                
+                <!-- Seção 6: Não foi dessa vez -->
+                <div class="wheel-section" style="background: #607D8B; transform: rotate(300deg);" aria-label="Seção Não foi dessa vez">
+                    <div class="section-content">
+                        <div class="section-icon" aria-hidden="true">😢</div>
+                        <div>Não foi dessa vez</div>
+                    </div>
+                </div>
+            </div>
+            
+            <button class="spin-button" id="spinButton" aria-label="Girar a roleta">START</button>
+        </div>
+    </div>
+
+    <div class="overlay" id="overlay"></div>
+
+    <div class="result-message" id="resultMessage" role="dialog" aria-labelledby="resultTitle" aria-describedby="resultText">
+        <h2 class="text-2xl font-bold mb-2" id="resultTitle">Parabéns!</h2>
+        <p class="text-lg" id="resultText">Você ganhou um prêmio!</p>
+        <button class="mt-4 bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-6 rounded-full transition-all" onclick="closeResult()" aria-label="Fechar resultado">OK</button>
+    </div>
+
+    <script>
+        // Dados do participante
+        let participanteData = {};
+
+        // Elementos do formulário
+        const cadastroModal = document.getElementById('cadastroModal');
+        const cadastroForm = document.getElementById('cadastroForm');
+        const roletaContent = document.getElementById('roletaContent');
+        const participanteNome = document.getElementById('participanteNome');
+
+        // Elementos da roleta
+        const wheel = document.getElementById('wheel');
+        const spinButton = document.getElementById('spinButton');
+        const resultMessage = document.getElementById('resultMessage');
+        const resultTitle = document.getElementById('resultTitle');
+        const resultText = document.getElementById('resultText');
+        const overlay = document.getElementById('overlay');
+        const reiniciarBtn = document.getElementById('reiniciarBtn');
+        
+        if (!wheel || !spinButton || !resultMessage || !resultTitle || !resultText || !overlay) {
+            console.error('Elementos necessários não encontrados');
+            document.body.innerHTML = '<div class="text-center text-red-600 p-8">Erro ao carregar a roleta</div>';
+        }
+        
+        const prizes = [
+            { name: "Caneta", icon: "✏️", message: "Você ganhou uma caneta!", isWin: true },
+            { name: "Copo", icon: "🥤", message: "Você ganhou um copo!", isWin: true },
+            { name: "Chaveiro", icon: "🔑", message: "Você ganhou um chaveiro!", isWin: true },
+            { name: "Porta-copos", icon: "🍹", message: "Você ganhou um porta-copos!", isWin: true },
+            { name: "Pulou a vez", icon: "⏭️", message: "Pulou a vez! Tente novamente.", isWin: false },
+            { name: "Não foi dessa vez", icon: "😢", message: "Não foi dessa vez! Tente novamente.", isWin: false }
+        ];
+        
+        let canSpin = true;
+        let currentRotation = 0;
+        let isSpinning = false;
+        
+        // Função para gerar número aleatório mais seguro
+        function getRandomInt(min, max) {
+            return Math.floor(Math.random() * (max - min + 1)) + min;
+        }
+
+        // Função para validar telefone
+        function validarTelefone(telefone) {
+            const telefoneLimpo = telefone.replace(/\D/g, '');
+            return telefoneLimpo.length >= 10 && telefoneLimpo.length <= 11;
+        }
+
+        // Função para formatar telefone
+        function formatarTelefone(telefone) {
+            const telefoneLimpo = telefone.replace(/\D/g, '');
+            if (telefoneLimpo.length === 11) {
+                return `(${telefoneLimpo.slice(0,2)}) ${telefoneLimpo.slice(2,7)}-${telefoneLimpo.slice(7)}`;
+            } else if (telefoneLimpo.length === 10) {
+                return `(${telefoneLimpo.slice(0,2)}) ${telefoneLimpo.slice(2,6)}-${telefoneLimpo.slice(6)}`;
+            }
+            return telefone;
+        }
+
+        // Máscara para telefone
+        document.getElementById('telefone').addEventListener('input', function(e) {
+            let value = e.target.value.replace(/\D/g, '');
+            if (value.length <= 11) {
+                if (value.length === 11) {
+                    value = `(${value.slice(0,2)}) ${value.slice(2,7)}-${value.slice(7)}`;
+                } else if (value.length === 10) {
+                    value = `(${value.slice(0,2)}) ${value.slice(2,6)}-${value.slice(6)}`;
+                } else if (value.length >= 6) {
+                    value = `(${value.slice(0,2)}) ${value.slice(2,6)}-${value.slice(6)}`;
+                } else if (value.length >= 2) {
+                    value = `(${value.slice(0,2)}) ${value.slice(2)}`;
+                }
+                e.target.value = value;
+            }
+        });
+
+        // Validação do formulário
+        cadastroForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            // Limpar mensagens de erro
+            document.querySelectorAll('.error-message').forEach(el => el.style.display = 'none');
+            
+            let isValid = true;
+            
+            // Validar nome
+            const nome = document.getElementById('nome').value.trim();
+            if (nome.length < 3) {
+                document.getElementById('nomeError').style.display = 'block';
+                isValid = false;
+            }
+            
+            // Validar telefone
+            const telefone = document.getElementById('telefone').value;
+            if (!validarTelefone(telefone)) {
+                document.getElementById('telefoneError').style.display = 'block';
+                isValid = false;
+            }
+            
+            // Validar aceite
+            const aceite = document.getElementById('aceite').checked;
+            if (!aceite) {
+                document.getElementById('aceiteError').style.display = 'block';
+                isValid = false;
+            }
+            
+            if (isValid) {
+                // Preparar dados do participante
+                const dadosParticipante = {
+                    nome: nome,
+                    telefone: formatarTelefone(telefone),
+                    empresa: document.getElementById('empresa').value.trim(),
+                    cargo: document.getElementById('cargo').value.trim(),
+                    aceite: aceite
+                };
+                
+                // Enviar dados para o servidor
+                fetch('/api/salvar-participante', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(dadosParticipante)
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Salvar dados do participante com ID
+                        participanteData = {
+                            ...dadosParticipante,
+                            id: data.id,
+                            dataCadastro: new Date().toISOString()
+                        };
+                        
+                        // Mostrar roleta
+                        cadastroModal.style.display = 'none';
+                        roletaContent.classList.remove('hidden');
+                        participanteNome.textContent = participanteData.nome;
+                        
+                        // Salvar no localStorage
+                        localStorage.setItem('participanteData', JSON.stringify(participanteData));
+                        
+                        console.log('Participante salvo com sucesso:', participanteData);
+                    } else {
+                        alert('Erro ao salvar dados: ' + (data.error || 'Erro desconhecido'));
+                    }
+                })
+                .catch(error => {
+                    console.error('Erro ao enviar dados:', error);
+                    alert('Erro ao conectar com o servidor. Verifique se o servidor está rodando.');
+                });
+            }
+        });
+        
+        spinButton.addEventListener('click', () => {
+            // Verificar se há dados do participante
+            if (!participanteData || !participanteData.id) {
+                // Se não há dados, mostrar formulário
+                cadastroModal.style.display = 'flex';
+                roletaContent.classList.add('hidden');
+                document.getElementById('nome').focus();
+                return;
+            }
+            
+            if (!canSpin || isSpinning) return;
+            
+            isSpinning = true;
+            canSpin = false;
+            spinButton.disabled = true;
+            spinButton.setAttribute('aria-label', 'Girando...');
+            
+            // Determine o resultado aleatoriamente
+            const prizeIndex = getRandomInt(0, prizes.length - 1);
+            const prize = prizes[prizeIndex];
+            
+            // Calcule a rotação necessária de forma mais precisa
+            const sectionAngle = 360 / prizes.length; // 60 graus por seção
+            const targetAngle = prizeIndex * sectionAngle + sectionAngle / 2; // Centro da seção
+            const extraRotations = getRandomInt(5, 10); // 5 a 10 rotações completas
+            const targetRotation = extraRotations * 360 + (360 - targetAngle);
+            
+            // Atualize a rotação atual
+            currentRotation += targetRotation;
+            
+            // Aplique a rotação à roda
+            wheel.style.transform = `rotate(${currentRotation}deg)`;
+            
+            // Após a animação terminar, mostre o resultado
+            setTimeout(() => {
+                showResult(prize);
+                if (prize.isWin) {
+                    createConfetti();
+                }
+                
+                setTimeout(() => {
+                    spinButton.disabled = false;
+                    spinButton.style.opacity = '1';
+                    canSpin = true;
+                    isSpinning = false;
+                    spinButton.setAttribute('aria-label', 'Girar a roleta');
+                }, 1000);
+            }, 4000); // Tempo da animação de rotação
+        });
+        
+        function showResult(prize) {
+            if (prize.isWin) {
+                resultTitle.textContent = "Parabéns!";
+                resultTitle.className = "text-2xl font-bold mb-2 text-green-600";
+            } else {
+                resultTitle.textContent = "Opa!";
+                resultTitle.className = "text-2xl font-bold mb-2 text-blue-600";
+            }
+            
+            resultText.innerHTML = `${prize.icon} ${prize.message}`;
+            resultMessage.classList.add('show');
+            overlay.classList.add('show');
+            
+            // Salvar resultado no servidor
+            if (participanteData && participanteData.id) {
+                fetch('/api/atualizar-resultado', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        participante_id: participanteData.id,
+                        resultado: prize.name
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        console.log('Resultado salvo com sucesso:', prize.name);
+                    } else {
+                        console.error('Erro ao salvar resultado:', data.error);
+                    }
+                })
+                .catch(error => {
+                    console.error('Erro ao enviar resultado:', error);
+                });
+            }
+            
+            // Focar no modal para acessibilidade
+            resultMessage.focus();
+        }
+        
+        function closeResult() {
+            resultMessage.classList.remove('show');
+            overlay.classList.remove('show');
+            // Retornar foco para o botão de girar
+            spinButton.focus();
+        }
+        
+        // Fechar modal com ESC
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && resultMessage.classList.contains('show')) {
+                closeResult();
+            }
+        });
+        
+        // Fechar modal clicando no overlay
+        overlay.addEventListener('click', () => {
+            if (resultMessage.classList.contains('show')) {
+                closeResult();
+            }
+        });
+        
+        function createConfetti() {
+            const colors = ['#FF5252', '#FF9800', '#4CAF50', '#2196F3', '#9C27B0', '#FFC107'];
+            const confettiCount = 50; // Reduzido para melhor performance
+            
+            for (let i = 0; i < confettiCount; i++) {
+                const confetti = document.createElement('div');
+                confetti.className = 'confetti';
+                confetti.style.left = Math.random() * 100 + 'vw';
+                confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                confetti.style.width = Math.random() * 10 + 5 + 'px';
+                confetti.style.height = Math.random() * 10 + 5 + 'px';
+                confetti.style.borderRadius = Math.random() > 0.5 ? '50%' : '0';
+                confetti.style.animation = `fall ${Math.random() * 3 + 2}s linear forwards`;
+                confetti.style.animationDelay = Math.random() * 2 + 's';
+                
+                document.body.appendChild(confetti);
+                
+                // Remova o confete após a animação
+                setTimeout(() => {
+                    if (confetti.parentNode) {
+                        confetti.remove();
+                    }
+                }, 5000);
+            }
+        }
+        
+        // Função para reiniciar o jogo
+        function reiniciarJogo() {
+            // Limpar dados do participante atual
+            participanteData = {};
+            localStorage.removeItem('participanteData');
+            
+            // Resetar a roleta
+            currentRotation = 0;
+            wheel.style.transform = 'rotate(0deg)';
+            canSpin = true;
+            isSpinning = false;
+            
+            // Limpar formulário
+            cadastroForm.reset();
+            document.querySelectorAll('.error-message').forEach(el => el.style.display = 'none');
+            
+            // Limpar nome do participante na tela
+            participanteNome.textContent = '';
+            
+            // Mostrar modal de cadastro
+            cadastroModal.style.display = 'flex';
+            roletaContent.classList.add('hidden');
+            
+            // Focar no primeiro campo
+            document.getElementById('nome').focus();
+            
+            console.log('Jogo reiniciado - dados do participante anterior limpos');
+        }
+        
+        // Verificar se há dados salvos no localStorage
+        const dadosSalvos = localStorage.getItem('participanteData');
+        if (dadosSalvos) {
+            try {
+                participanteData = JSON.parse(dadosSalvos);
+                if (participanteData && participanteData.id) {
+                    // Se há dados válidos, mostrar roleta diretamente
+                    cadastroModal.style.display = 'none';
+                    roletaContent.classList.remove('hidden');
+                    participanteNome.textContent = participanteData.nome;
+                    console.log('Dados do participante carregados:', participanteData);
+                }
+            } catch (e) {
+                console.error('Erro ao carregar dados salvos:', e);
+                localStorage.removeItem('participanteData');
+            }
+        }
+        
+        // Event listener para o botão reiniciar
+        reiniciarBtn.addEventListener('click', reiniciarJogo);
+        
+        // Prevenir múltiplos cliques durante a animação
+        wheel.addEventListener('transitionstart', () => {
+            isSpinning = true;
+        });
+        
+        wheel.addEventListener('transitionend', () => {
+            isSpinning = false;
+        });
+    </script>
+</body>
+</html>
